@@ -1,0 +1,291 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <iostream>
+#include <conio.h>
+using namespace std;
+
+struct Sach {
+    char maSach[11];      // Cho phép mã như "tb-0333"
+    char tenSach[51];
+    char tenTG[51];
+    int namXB;
+    float giaBan;
+};
+typedef Sach ItemType;
+
+struct BSTNode {
+    ItemType Info;
+    BSTNode* Left;
+    BSTNode* Right;
+};
+
+struct BSTree {
+    BSTNode* Root;
+};
+
+BSTNode* createTNode(ItemType x) {
+    BSTNode* p = new BSTNode;
+    if (!p) {
+        printf("\nLoi khoi tao!");
+        return NULL;
+    }
+    p->Info = x;
+    p->Left = NULL;
+    p->Right = NULL;
+    return p;
+}
+
+void initBSTree(BSTree& bt) {
+    bt.Root = NULL;
+}
+
+int insertBSTNode(BSTNode*& root, BSTNode* p) {
+    if (p == NULL) return 0;
+
+    if (root == NULL) {
+        root = p;
+        return 1;
+    }
+
+    int cmp = strcmp(p->Info.maSach, root->Info.maSach);
+    if (cmp == 0)
+        return 0; // Trùng
+    else if (cmp < 0)
+        return insertBSTNode(root->Left, p);
+    else
+        return insertBSTNode(root->Right, p);
+}
+
+void createBSTree_FromFile(BSTree& bst) {
+    FILE* fi = fopen("DuLieu_Sach.txt", "rt");
+    if (!fi) {
+        printf("Error opening file!");
+        return;
+    }
+    int n;
+    fscanf(fi, "%d\n", &n);
+    ItemType x;
+    initBSTree(bst);
+    int i = 1;
+    while (i <= n) {
+        fscanf(fi, "%10[^|]|%50[^|]|%50[^|]|%d|%f\n",
+            x.maSach, x.tenSach, x.tenTG, &x.namXB, &x.giaBan);
+        BSTNode* p = createTNode(x);
+        int kq = insertBSTNode(bst.Root, p);
+        if (kq == 1) i++;
+    }
+    printf("\nRead data from file successful.");
+    fclose(fi);
+}
+
+void nhapSach(ItemType& x) {
+    printf("Nhap ma sach: ");
+    fgets(x.maSach, sizeof(x.maSach), stdin);
+    x.maSach[strcspn(x.maSach, "\n")] = '\0';
+
+    printf("Nhap ten sach: ");
+    fgets(x.tenSach, sizeof(x.tenSach), stdin);
+    x.tenSach[strcspn(x.tenSach, "\n")] = '\0';
+
+    printf("Nhap ten tac gia: ");
+    fgets(x.tenTG, sizeof(x.tenTG), stdin);
+    x.tenTG[strcspn(x.tenTG, "\n")] = '\0';
+
+    printf("Nhap nam xuat ban: ");
+    scanf_s("%d", &x.namXB);
+    getchar();
+
+    printf("Nhap gia ban: ");
+    scanf_s("%f", &x.giaBan);
+    getchar();
+}
+
+
+BSTNode* findSachTheoTen(BSTNode* root, const char* ten) {
+    if (root == NULL)
+        return NULL;
+
+    // So sánh hiện tại
+    if (strcmp(root->Info.tenSach, ten) == 0)
+        return root;
+
+    // Duyệt trái
+    BSTNode* leftResult = findSachTheoTen(root->Left, ten);
+    if (leftResult != NULL)
+        return leftResult;
+
+    // Duyệt phải
+    return findSachTheoTen(root->Right, ten);
+}
+
+
+void showSach(ItemType s) {
+    printf("\n%-10s | %-30s | %-20s | %4d | %8.2f",
+        s.maSach, s.tenSach, s.tenTG, s.namXB, s.giaBan);
+}
+
+void traverseLNR(BSTNode* root) {
+    if (!root) return;
+    traverseLNR(root->Left);
+    showSach(root->Info);
+    traverseLNR(root->Right);
+}
+
+void traverseRNL(BSTNode* root) {
+    if (!root) return;
+    traverseRNL(root->Right);
+    showSach(root->Info);
+    traverseRNL(root->Left);
+}
+
+int xoaNodeTheoMa(BSTNode*& root, char* ma) {
+    if (!root)
+        return 0;
+
+    if (strcmp(root->Info.maSach, ma) == 0) {
+        BSTNode* temp = root;
+
+        if (!temp->Left)
+            root = temp->Right;
+        else if (!temp->Right)
+            root = temp->Left;
+        else
+        {
+            BSTNode* cha = temp;
+            BSTNode* min = temp->Right;
+            while (min->Left)
+            {
+                cha = min;
+                min = min->Left;
+            }
+
+            temp->Info = min->Info;
+
+            if (cha == temp)
+                cha->Right = min->Right;
+            else
+                cha->Left = min->Right;
+
+            delete min;
+            return 1;
+        }
+
+        delete temp;
+        return 1;
+    }
+
+    return xoaNodeTheoMa(root->Left, ma) || xoaNodeTheoMa(root->Right, ma);
+}
+//xoa toan bo cay
+void xoaToanBoCay(BSTNode*& root) {
+    if (!root) return;
+    xoaToanBoCay(root->Left);
+    xoaToanBoCay(root->Right);
+    delete root;
+    root = NULL;
+}  
+
+//dem sach theo nam
+int countNamXB(BSTNode* root, int nam) {
+    if (!root) return 0;
+    int count = 0;
+    if (root->Info.namXB == nam) count++;
+    return count + countNamXB(root->Left, nam) + countNamXB(root->Right, nam);
+}
+int countGiaTrongKhoang(BSTNode* root, float min, float max) {
+    if (!root) return 0;
+    int count = 0;
+    if (root->Info.giaBan >= min && root->Info.giaBan <= max) count++;
+    return count + countGiaTrongKhoang(root->Left, min, max) + countGiaTrongKhoang(root->Right, min, max);
+}
+
+int highTree(BSTNode* root)
+{
+    if (!root)return 0;
+    int hl = highTree(root->Left);
+    int hr = highTree(root->Right);
+    if (hl > hr)
+        return hl + 1;
+    else
+        return hr + 1;
+}
+
+
+void menu() {
+    printf("\n------------------- MENU -------------------\n");
+    printf("1. Tao cay tu file DuLieu_Sach.txt\n");
+    printf("2. Duyet cay theo LNR va RNL\n");
+    printf("3. Them mot cuon sach moi\n");
+    printf("4. Tim sach theo ten\n");
+    printf("5. Xoa sach theo ma sach\n");
+    printf("6. Dem sach co nam xuat ban la n\n");
+    printf("7. Dem sach co gia ban trong khoang 50000 - 99000\n");
+    printf("8. Tinh chieu cao cua cay\n");
+    printf("9. Xoa toan bo cay\n");
+    printf("0. Thoat chuong trinh\n");
+}
+
+void process() {
+    BSTree myTree;
+    initBSTree(myTree);
+    int choice;
+    do 
+    {
+        menu();
+        printf("\nNhap lua chon: ");
+        scanf("%d", &choice);
+        getchar(); // chặn trôi lệnh sau scanf
+        switch (choice)
+        {
+        case 1:
+            createBSTree_FromFile(myTree);
+            break;
+        case 2:
+            traverseLNR(myTree.Root);
+            break;
+        case 3:
+        {
+            ItemType sach;
+            nhapSach(sach);
+            BSTNode* p = createTNode(sach);
+            if (insertBSTNode(myTree.Root, p) == 1)
+                printf("\nThem thanh cong!");
+            else
+                printf("\nKhong them thanh cong");
+            break;
+        }
+        case 4:
+        {
+            char tenSach[51];
+            printf("\nNhap ten sach can tim: ");
+            fgets(tenSach, sizeof(tenSach), stdin);
+            tenSach[strcspn(tenSach, "\n")] = '\0';
+
+            BSTNode* p = findSachTheoTen(myTree.Root, tenSach);
+            if (p == NULL)
+                printf("\nKhong tim thay sach co ten: %s", tenSach);
+            else {
+                printf("\nTim thay sach:");
+                showSach(p->Info);
+            }
+            break;
+        }
+        case 5:
+        {
+            char SachXoa[51];
+            printf("\nNhap vao ma sach can xoa: ");
+            fgets(SachXoa, sizeof(SachXoa), stdin);
+            SachXoa[strcspn(SachXoa, "\n")] = '\0';
+        }
+        case 9: 
+        {
+            xoaToanBoCay(myTree.Root);
+        }
+        }
+    } while (choice != 0);
+}
+
+int main() {
+    process();
+    return 0;
+}
