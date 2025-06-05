@@ -183,7 +183,7 @@ void xoaToanBoCay(BSTNode*& root) {
     xoaToanBoCay(root->Right);
     delete root;
     root = NULL;
-}  
+}
 
 //dem sach theo nam
 int countNamXB(BSTNode* root, int nam) {
@@ -229,7 +229,7 @@ void process() {
     BSTree myTree;
     initBSTree(myTree);
     int choice;
-    do 
+    do
     {
         menu();
         printf("\nNhap lua chon: ");
@@ -240,9 +240,11 @@ void process() {
         case 1:
             createBSTree_FromFile(myTree);
             break;
+
         case 2:
             traverseLNR(myTree.Root);
             break;
+
         case 3:
         {
             ItemType sach;
@@ -254,6 +256,7 @@ void process() {
                 printf("\nKhong them thanh cong");
             break;
         }
+
         case 4:
         {
             char tenSach[51];
@@ -270,17 +273,60 @@ void process() {
             }
             break;
         }
+
         case 5:
         {
             char SachXoa[51];
             printf("\nNhap vao ma sach can xoa: ");
             fgets(SachXoa, sizeof(SachXoa), stdin);
             SachXoa[strcspn(SachXoa, "\n")] = '\0';
+
+            int kq = xoaNodeTheoMa(myTree.Root, SachXoa);
+            if (kq)
+                printf("\nDa xoa sach co ma: %s", SachXoa);
+            else
+                printf("\nKhong tim thay sach de xoa.");
+            break;
         }
-        case 9: 
+
+        case 6:
+        {
+            int nam;
+            printf("Nhap nam xuat ban can dem: ");
+            scanf("%d", &nam);
+            getchar();
+            int count = countNamXB(myTree.Root, nam);
+            printf("\nCo %d sach xuat ban nam %d.\n", count, nam);
+            break;
+        }
+
+        case 7:
+        {
+            int count = countGiaTrongKhoang(myTree.Root, 50000, 99000);
+            printf("\nCo %d sach co gia ban trong khoang 50000 - 99000.\n", count);
+            break;
+        }
+
+        case 8:
+        {
+            int h = highTree(myTree.Root);
+            printf("\nChieu cao cua cay la: %d\n", h);
+            break;
+        }
+
+        case 9:
         {
             xoaToanBoCay(myTree.Root);
+            printf("\nDa xoa toan bo cay.\n");
+            break;
         }
+
+        case 0:
+            printf("\nKet thuc chuong trinh.\n");
+            break;
+
+        default:
+            printf("\nLua chon khong hop le. Moi nhap lai.\n");
         }
     } while (choice != 0);
 }
